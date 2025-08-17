@@ -1,128 +1,189 @@
-// central place to import all models and define associations
-import './user';
-import './customer/customer.model';
-import './employee/employee.model';
-import './branch/branch.model';
-import './employee/employeeshift.model';
-import './employee/emphistory.model';
-import './employee/jobtitle.model';
-import './branch/expense.model';
-import './product/category.model';
-import './product/product.model';
-import './product/recipe.model';
-import './product/material.model';
-import './holds';
-import './warehouse/warehouse.model';
-import './warehouse/warehouseHaveMaterials.model';
-import './vendor';
-import './order/ispurchased.model';
-import './order/order.model';
-import './order/workon.model';
-import './order/payment.model';
-import './customer/mortgage.model';
-
-// after importing, grab the classes from require cache (or import them by name)
+import { Sequelize, DataTypes } from 'sequelize';
 import { sequelize } from '../connection';
-import { User } from './user';
-import { Customer } from './customer/customer.model';
-import { Employee } from './employee/employee.model';
-import { Branch } from './branch/branch.model';
-import { EmployeeShift } from './employee/employeeshift.model';
-import { EmpHistory } from './employee/emphistory.model';
-import { JobTitle } from './employee/jobtitle.model';
-import { Expense } from './branch/expense.model';
-import { Category } from './product/category.model';
-import { Product } from './product/product.model';
-import { Recipe } from './product/recipe.model';
-import { Material } from './product/material.model';
-import { Holds } from './branch/hold_material.model';
-import { Warehouse } from './warehouse/warehouse.model';
-import { WarehouseHaveMaterials } from './warehouse/warehouseHaveMaterials.model';
-import { Vendor } from './vendor';
-import { IsPurchased } from './order/ispurchased.model';
-import { Order } from './order/order.model';
-import { WorkOn } from './order/workon.model';
-import { Payment } from './order/payment.model';
-import { Mortgage } from './customer/mortgage.model';
 
-// define junction for EmpHistory <-> JobTitle
-const EmpHistory_JobTitle = sequelize.define('EmpHistory_JobTitle', {
-  EmpId: { type: (sequelize as any).Sequelize.DataTypes.INTEGER, allowNull: false },
-  JobTitle: { type: (sequelize as any).Sequelize.DataTypes.INTEGER, allowNull: false }
-}, { timestamps: false });
+// Import models from their correct paths
+import Users from './users/user.model';
+import Customers from './users/customer.model';
+import Employees from './users/employee.model';
+import EmpHistory from './users/emp_history.model';
+import Payments from './orders/payments.model';
+import Orders from './orders/orders.model';
+import OrderItem from './orders/order_item.model';
+import WorkOn from './orders/work_on.model';
 
-// associations (copy from main file)
-User.hasMany(Customer, { foreignKey: 'userId' });
-Customer.belongsTo(User, { foreignKey: 'userId' });
+import Branch from './branch/branch.model';
+import EmpShift from './branch/employeeshift.model';
+import Expense from './branch/expense.model';
+import Holds from './branch/holdMaterial.model';
+import Wastage from './branch/wastage.model';
+import CashDrawerClosure from './branch/cash_drawer_closure.model';
 
-User.hasMany(Employee, { foreignKey: 'userId' });
-Employee.belongsTo(User, { foreignKey: 'userId' });
+import Product from './inventory/product.model';
+import ProductCategory from './inventory/Product_category.model';
+import Materials from './inventory/materials.model';
+import Recipe from './inventory/recipe.model';
+import Vendor from './inventory/vendor.model';
+import Warehouse from './inventory/warehouse.model';
+import WarehouseHaveMaterials from './inventory/warehouse_have_materials.model';
+import PurchaseOrder from './inventory/purchase_order.model';
+import PurchaseOrderItem from './inventory/purchase_order_item.model';
+import InventoryTransaction from './inventory/inventory_transaction.model';
+import IsPurchased from './inventory/is_purchased.model';
 
-Branch.hasMany(Employee, { foreignKey: 'branchId' });
-Employee.belongsTo(Branch, { foreignKey: 'branchId' });
+// Import other models
+import { Deposit } from './deposit.model';
 
-Employee.hasMany(EmployeeShift, { foreignKey: 'employee_id' });
-EmployeeShift.belongsTo(Employee, { foreignKey: 'employee_id' });
+export function initModels(sequelizeInstance: Sequelize = sequelize) {
+  Users.initialize(sequelizeInstance);
+  Customers.initialize(sequelizeInstance);
+  Employees.initialize(sequelizeInstance);
+  EmpHistory.initialize(sequelizeInstance);
+  Payments.initialize(sequelizeInstance);
+  Orders.initialize(sequelizeInstance);
+  OrderItem.initialize(sequelizeInstance);
+  WorkOn.initialize(sequelizeInstance);
+  
+  Branch.initialize(sequelizeInstance);
+  EmpShift.initialize(sequelizeInstance);
+  Expense.initialize(sequelizeInstance);
+  Holds.initialize(sequelizeInstance);
+  Wastage.initialize(sequelizeInstance);
+  CashDrawerClosure.initialize(sequelizeInstance);
+  
+  Product.initialize(sequelizeInstance);
+  ProductCategory.initialize(sequelizeInstance);
+  Materials.initialize(sequelizeInstance);
+  Recipe.initialize(sequelizeInstance);
+  Vendor.initialize(sequelizeInstance);
+  Warehouse.initialize(sequelizeInstance);
+  WarehouseHaveMaterials.initialize(sequelizeInstance);
+  PurchaseOrder.initialize(sequelizeInstance);
+  PurchaseOrderItem.initialize(sequelizeInstance);
+  InventoryTransaction.initialize(sequelizeInstance);
+  IsPurchased.initialize(sequelizeInstance);
+  
+  // Initialize Deposit model
+  Deposit.init({
+    deposit_id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+    amount: { type: DataTypes.DECIMAL, allowNull: false },
+    deposit_date: { type: DataTypes.DATE, allowNull: false },
+    due_date: { type: DataTypes.DATE, allowNull: false },
+    return_date: { type: DataTypes.DATE },
+    status: { type: DataTypes.STRING, allowNull: false }
+  }, { sequelize: sequelizeInstance, tableName: 'deposit', timestamps: false });
 
-Branch.hasMany(EmployeeShift, { foreignKey: 'branchId' });
-EmployeeShift.belongsTo(Branch, { foreignKey: 'branchId' });
+  // --- Associations ---
+  // User relationships
+  Users.hasOne(Customers, { foreignKey: 'user_id' });
+  Customers.belongsTo(Users, { foreignKey: 'user_id' });
 
-Employee.hasMany(EmpHistory, { foreignKey: 'employee_id' });
-EmpHistory.belongsTo(Employee, { foreignKey: 'employee_id' });
+  Users.hasOne(Employees, { foreignKey: 'user_id' });
+  Employees.belongsTo(Users, { foreignKey: 'user_id' });
 
-EmpHistory.belongsToMany(JobTitle, { through: EmpHistory_JobTitle, foreignKey: 'EmpId' });
-JobTitle.belongsToMany(EmpHistory, { through: EmpHistory_JobTitle, foreignKey: 'JobTitle' });
+  // Employee relationships
+  Employees.hasMany(EmpHistory, { foreignKey: 'employee_id' });
+  EmpHistory.belongsTo(Employees, { foreignKey: 'employee_id' });
 
-Branch.hasMany(Expense, { foreignKey: 'branchId' });
-Expense.belongsTo(Branch, { foreignKey: 'branchId' });
+  // Customer relationships
+  Customers.hasMany(Payments, { foreignKey: 'customer_id' });
+  Payments.belongsTo(Customers, { foreignKey: 'customer_id' });
 
-Category.hasMany(Expense, { foreignKey: 'categoryName', sourceKey: 'name' });
-Expense.belongsTo(Category, { foreignKey: 'categoryName', targetKey: 'name' });
+  // Order relationships
+  Customers.hasMany(Orders, { foreignKey: 'customer_id' });
+  Orders.belongsTo(Customers, { foreignKey: 'customer_id' });
 
-Category.hasMany(Product, { foreignKey: 'categoryName', sourceKey: 'name' });
-Product.belongsTo(Category, { foreignKey: 'categoryName', targetKey: 'name' });
+  Employees.hasMany(Orders, { foreignKey: 'employee_id' });
+  Orders.belongsTo(Employees, { foreignKey: 'employee_id' });
 
-Product.hasMany(Recipe, { foreignKey: 'product_id' });
-Recipe.belongsTo(Product, { foreignKey: 'product_id' });
+  Orders.hasMany(OrderItem, { foreignKey: 'order_id' });
+  OrderItem.belongsTo(Orders, { foreignKey: 'order_id' });
 
-Material.hasMany(Recipe, { foreignKey: 'material_id' });
-Recipe.belongsTo(Material, { foreignKey: 'material_id' });
+  // Product relationships
+  Product.hasMany(OrderItem, { foreignKey: 'product_id' });
+  OrderItem.belongsTo(Product, { foreignKey: 'product_id' });
 
-Material.hasMany(Holds, { foreignKey: 'material_id' });
-Holds.belongsTo(Material, { foreignKey: 'material_id' });
+  // Branch relationships
+  Branch.hasMany(EmpShift, { foreignKey: 'branch_id' });
+  EmpShift.belongsTo(Branch, { foreignKey: 'branch_id' });
+  
+  Branch.hasMany(Expense, { foreignKey: 'branch_id' });
+  Expense.belongsTo(Branch, { foreignKey: 'branch_id' });
+  
+  Branch.hasMany(Holds, { foreignKey: 'branch_id' });
+  Holds.belongsTo(Branch, { foreignKey: 'branch_id' });
 
-Branch.hasMany(Holds, { foreignKey: 'branchId' });
-Holds.belongsTo(Branch, { foreignKey: 'branchId' });
+  // Warehouse relationships
+  Warehouse.belongsToMany(Materials, { 
+    through: WarehouseHaveMaterials, 
+    foreignKey: 'warehouse_id', 
+    otherKey: 'material_id' 
+  });
+  Materials.belongsToMany(Warehouse, { 
+    through: WarehouseHaveMaterials, 
+    foreignKey: 'material_id', 
+    otherKey: 'warehouse_id' 
+  });
 
-Warehouse.hasMany(WarehouseHaveMaterials, { foreignKey: 'warehouseId' });
-WarehouseHaveMaterials.belongsTo(Warehouse, { foreignKey: 'warehouseId' });
-
-Customer.hasMany(Order, { foreignKey: 'customerId' });
-Order.belongsTo(Customer, { foreignKey: 'customerId' });
-
-Product.hasMany(Order, { foreignKey: 'order_id' });
-Order.belongsTo(Product, { foreignKey: 'order_id' });
-
-Mortgage.hasMany(Order, { foreignKey: 'mortgage_id' });
-Order.belongsTo(Mortgage, { foreignKey: 'mortgage_id' });
-
-Payment.hasMany(Order, { foreignKey: 'payment_id' });
-Order.belongsTo(Payment, { foreignKey: 'payment_id' });
-
-Order.belongsToMany(Employee, { through: WorkOn, foreignKey: 'order_id' });
-Employee.belongsToMany(Order, { through: WorkOn, foreignKey: 'employee_id' });
-
-Vendor.hasMany(IsPurchased, { foreignKey: 'vendor_id' });
-IsPurchased.belongsTo(Vendor, { foreignKey: 'vendor_id' });
-
-Material.hasMany(IsPurchased, { foreignKey: 'material_id' });
-IsPurchased.belongsTo(Material, { foreignKey: 'material_id' });
+  // Product relationships
+  Product.belongsTo(ProductCategory, { 
+    foreignKey: 'category_name', 
+    targetKey: 'name' 
+  });
+  ProductCategory.hasMany(Product, { 
+    foreignKey: 'category_name', 
+    sourceKey: 'name' 
+  });
+  
+  // Recipe relationships
+  Product.hasMany(Recipe, { foreignKey: 'product_id' });
+  Recipe.belongsTo(Product, { foreignKey: 'product_id' });
+  
+  Materials.hasMany(Recipe, { foreignKey: 'material_id' });
+  Recipe.belongsTo(Materials, { foreignKey: 'material_id' });
+  
+  // Inventory transaction relationships
+  Materials.hasMany(InventoryTransaction, { foreignKey: 'material_id' });
+  InventoryTransaction.belongsTo(Materials, { foreignKey: 'material_id' });
+  
+  // Purchase order relationships
+  Vendor.hasMany(PurchaseOrder, { foreignKey: 'vendor_id' });
+  PurchaseOrder.belongsTo(Vendor, { foreignKey: 'vendor_id' });
+  
+  PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: 'purchase_order_id' });
+  PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: 'purchase_order_id' });
+  
+  Materials.hasMany(PurchaseOrderItem, { foreignKey: 'material_id' });
+  PurchaseOrderItem.belongsTo(Materials, { foreignKey: 'material_id' });
+}
 
 export {
-  sequelize,
-  User, Customer, Employee, Branch, EmployeeShift, EmpHistory, JobTitle,
-  Expense, Category, Product, Recipe, Material, Holds, Warehouse, WarehouseHaveMaterials,
-  Vendor, IsPurchased, Order, WorkOn, Payment, Mortgage,
-};
+  Users,
+  Customers,
+  Employees,
+  EmpHistory,
+  Payments,
+  Orders,
+  OrderItem,
+  WorkOn,
+  
+  Branch,
+  EmpShift,
+  Expense,
+  Holds,
+  Wastage,
+  CashDrawerClosure,
+  
+  Product,
+  ProductCategory,
+  Materials,
+  Recipe,
+  Vendor,
+  Warehouse,
+  WarehouseHaveMaterials,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  InventoryTransaction,
+  IsPurchased,
 
-// optionally sync: sequelize.sync({ alter: true });
+  Deposit
+};

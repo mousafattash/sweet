@@ -1,27 +1,24 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from '../../connection';
+// src/db/models/branch.model.ts
+import { Model, DataTypes, Sequelize } from 'sequelize';
 
-interface BranchAttributes {
-  branchId: number;
+export interface BranchAttributes {
+  branch_id: number;
   name: string;
-  phone: string;
-  address: string;
-  email: string;
+  phone?: string | null;
 }
-interface BranchCreationAttributes extends Optional<BranchAttributes, 'branchId'> {}
 
-export class Branch extends Model<BranchAttributes, BranchCreationAttributes> implements BranchAttributes {
-  public branchId!: number;
+export class Branch extends Model<BranchAttributes, Partial<BranchAttributes>> implements BranchAttributes {
+  public branch_id!: number;
   public name!: string;
-  public phone!: string;
-  public address!: string;
-  public email!: string;
+  public phone!: string | null;
+
+  static initialize(sequelize: Sequelize) {
+    Branch.init({
+      branch_id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
+      name: { type: DataTypes.TEXT, allowNull: false },
+      phone: { type: DataTypes.TEXT }
+    }, { sequelize, tableName: 'branch', timestamps: false });
+  }
 }
 
-Branch.init({
-  branchId: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-  name: { type: DataTypes.STRING, allowNull: false },
-  phone: { type: DataTypes.STRING, allowNull: false },
-  address: { type: DataTypes.STRING, allowNull: false },
-  email: { type: DataTypes.STRING, allowNull: false },
-}, { sequelize, tableName: 'Branch' });
+export default Branch;
